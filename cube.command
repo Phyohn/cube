@@ -1,11 +1,15 @@
 #!/bin/zsh
 cd `dirname $0`
-touch ../`date +%d%H%M-%S`.csv
-newcsv=$(ls -1t ../*.csv | head -1)
+#touch ../`date +%d%H%M-%S`.csv
+#newcsv=$(ls -1t ../*.csv | head -1)
+#echo -n to empty
+echo -n > stmp.txt
+newcsv=$(ls -1t ./stmp.txt)
 array=($(grep -a 'pageMax\\\"\:\d\}\"' /Users/mac2018/Applications/Collection/cube/Raw/*.har | sed 's/ //g' | cut -c 1-6000 ))
 echo ${#array[*]}
 newarray=($(for ((i=1; i<300; i++));do echo ${array[i]};done))
 echo ${#newarray[*]}
+
 for ((i=1;i<500;i++))
 do echo ${newarray[i]} > tmp.txt
 grep -ao 'dai\\\"\:\\\"[0-9]\{4\}\\\"\,\\\"c' tmp.txt | grep -ao '[0-9]\{4\}' | tr "\n" "," | >>$newcsv
@@ -16,6 +20,7 @@ grep -ao 't\\\"\:[0-9]\{1,\}\,\\\"value\\\"\:[-0-9]\{1,\}\,\\\"YMD_biz\\\"\:[0-9
 grep -ao 't\\\"\:[0-9]\{1,\}\,\\\"value\\\"\:[-0-9]\{1,\}\,\\\"YMD_biz\\\"\:[0-9]\{8\}\,\\\"L' tmp.txt | head -1 | grep -ao 't\\\"\:[0-9]\{1,\}\,' | grep -ao '[0-9]\{1,\}' | tr "\n" "," | >>$newcsv
 grep -ao 'name\\\"\:\\\"\D\+\\\"\,' tmp.txt | grep -ao '[^name\\\"\:\,]\+' | >>$newcsv
 done
+
 sort -uk 1n -t "," $newcsv | > tmp.txt
 er=($( cut -f 1 -d "," tmp.txt ))
 daiban="null"
@@ -35,5 +40,7 @@ daiban=`expr 1 + $daiban`
 echo "ok$er[i]"
 fi
 done
-cat tmp.txt > $newcsv
+
+python name.py
+
 exit

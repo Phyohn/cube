@@ -1,4 +1,5 @@
 #namecube.py
+#python  -i
 import cv2
 import base64
 import numpy as np
@@ -12,6 +13,18 @@ import time
 import platform
 
 comp = pd.read_csv('tmp.txt',names=('dai','Rotation','BB','RB','difference','max','machine'))
+#dailist series to df
+posdai = comp.loc[:,'dai'].unique()
+comp.insert(0,'posdai',posdai)
+dailist = pd.read_csv('dailist.txt',names=('posdai','kuu'))
+comp = pd.merge(comp, dailist, how='outer')
+comp = comp.reindex(columns=['posdai','Rotation','BB','RB','difference','max','machine'])
+#fillna(0) float to int64 'machine'object0 dtype to str for replacement
+comp = comp.fillna(0)
+comp = comp.astype({'posdai': 'int64','Rotation':'int64','BB':'int64','RB':'int64','difference':'int64','max':'int64','machine':'str'})
+#df.sort_values
+comp = comp.sort_values('posdai')
+
 
 #pd.Series.unique()
 defdai = comp.loc[:,'machine'].unique()

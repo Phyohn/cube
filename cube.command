@@ -1,27 +1,36 @@
 #!/bin/zsh
 cd `dirname $0`
-#touch ../`date +%d%H%M-%S`.csv
-#newcsv=$(ls -1t ../*.csv | head -1)
-#echo -n to empty
-echo -n > stmp.txt
-newcsv=$(ls -1t ./stmp.txt)
-array=($(grep -a 'pageMax\\\"\:\d\}\"' /Users/mac2018/Applications/Collection/cube/Raw/*.har | sed 's/ //g' | cut -c 1-6000 ))
-echo ${#array[*]}
-newarray=($(for ((i=1; i<300; i++));do echo ${array[i]};done))
-echo ${#newarray[*]}
 
-for ((i=1;i<500;i++))
-do echo ${newarray[i]} > tmp.txt
-grep -ao 'dai\\\"\:\\\"[0-9]\{4\}\\\"\,\\\"c' tmp.txt | grep -ao '[0-9]\{4\}' | tr "\n" "," | >>$newcsv
-grep -ao '累計ゲーム\\\"\,\\\"item\\\"\:\[[0-9]\{1,\}\,\|累計ゲーム\\\"\,\\\"item\\\"\:\[null\,[0-9]\{1,\}\,' tmp.txt | grep -ao '[0-9]\{1,\}' | tr "\n" "," | >>$newcsv
-grep -ao 'BIG\\\"\,\\\"item\\\"\:\[[0-9]\{1,\}\|BIG\\\"\,\\\"item\\\"\:\[null\,[0-9]\{1,\}' tmp.txt | grep -ao '[0-9]\{1,\}' | tr "\n" "," | >>$newcsv
-grep -ao 'REG\\\"\,\\\"item\\\"\:\[[0-9]\{1,\}\|REG\\\"\,\\\"item\\\"\:\[null\,[0-9]\{1,\}' tmp.txt | grep -ao '[0-9]\{1,\}' | tr "\n" "," | >>$newcsv
-grep -ao 't\\\"\:[0-9]\{1,\}\,\\\"value\\\"\:[-0-9]\{1,\}\,\\\"YMD_biz\\\"\:[0-9]\{8\}\,\\\"L' tmp.txt | head -1 | grep -ao '\:[-0-9]\{1,\}\,\\\"Y' | grep -ao '[-0-9]\{1,\}' | tr "\n" "," | >>$newcsv
-grep -ao 't\\\"\:[0-9]\{1,\}\,\\\"value\\\"\:[-0-9]\{1,\}\,\\\"YMD_biz\\\"\:[0-9]\{8\}\,\\\"L' tmp.txt | head -1 | grep -ao 't\\\"\:[0-9]\{1,\}\,' | grep -ao '[0-9]\{1,\}' | tr "\n" "," | >>$newcsv
-grep -ao 'name\\\"\:\\\"\D\+\\\"\,' tmp.txt | grep -ao '[^name\\\"\:\,]\+' | >>$newcsv
-done
+#tenpo
+tenpo=($(ls -1t ../Raw/*.har | head -1 | gxargs grep -om 1 'a725489'))
 
-sort -uk 1n -t "," $newcsv | > tmp.txt
+#String composition using$tenpo ""& ver without delimiter
+kakudai=($(find ../Raw -maxdepth 1 -type f -name '*.har' | gxargs grep -E 'pageMax\\\"\:\d\}\"' | sed 's/ //g' | sed -E 's/\\\\/\\/g' | sed -E "s/.*(Raw).*P'sCube(.*$)/\1,$tenpo,\2/g" ))
+
+#trimming null to 0　kaketai.txt
+#echo $kakudai | sed 's/ /\n/g' | tr -d \"\:\\\ | sed 's/YMD_biz//g' | sed -E 's/\\out\\//g' | sed -E 's/\\\\202[0-9]{5}},//g' | sed 's/\\value\\//g' | sed -E 's/null/0/g' | tee kakudai.txt
+
+#cat kakudai.txt | sed -E 's/^Raw,(a[0-9]{6}),.*cd_dai\\\\([0-9]{4})\\,.*name\\\\(.+)\\,\\cd_ps.*BIG\\,\\item\\(\[.*\])},{\\title\\\\REG\\,\\item\\(\[.*\])},0,{.*累計ゲーム\\,\\item\\(\[.*\])},{\\title.*(本日.*,\\\\202[0-9]{5},\\L\\true).*/\1,\2,\3,\4,\5,\6,\7/g'
+
+#1line trimming null to 0 BIG REG ST kaketai.txt
+echo $kakudai | sed 's/ /\n/g' | tr -d \"\:\\\ | sed 's/YMD_biz//g' | sed -E 's/\\out\\//g' | sed -E 's/\\\\202[0-9]{5}},//g' | sed 's/\\value\\//g' | sed -E 's/null/0/g' | sed -E 's/^Raw,(a[0-9]{6}),.*cd_dai\\\\([0-9]{4})\\,.*name\\\\(.+)\\,\\cd_ps.*BIG\\,\\item\\(\[.*\])},{\\title\\\\REG\\,\\item\\(\[.*\])},0,{.*累計ゲーム\\,\\item\\(\[.*\])},{\\title.*(本日.*,\\\\202[0-9]{5},\\L\\true).*/\1,\2,\3,BIG\4,REG\5,ST\6,\7/g' | tee kakudai.txt
+
+#Sed to $kakedai1 \2\3 本日,\4\5 1日前,\6\7 2日前,
+kakudai1=($(cat kakudai.txt | sed -E 's/^(.*),(本日).*({.+\\\\202[0-9]{5},\\L\\true).*(1日前).*({.+\\\\202[0-9]{5},\\L\\true).*(2日前).*({.+\\\\202[0-9]{5},\\L\\true).*(3日前)\\(.*)/\1,\2\3,\4\5,\6\7,\8\9/g'))
+
+#-E no escape \2\3 3日前,\4\5 4日前,\6\7 5日前,\8\9 6日前 to kakudai1.txt
+echo -E $kakudai1 | sed -E 's/ /\n/g' | sed -E 's/^(.*),(3日前).*({.+\\\\202[0-9]{5},\\L\\true).*(4日前).*({.+\\\\202[0-9]{5},\\L\\true).*(5日前).*({.+\\\\202[0-9]{5},\\L\\true).*(6日前).*({.+\\\\202[0-9]{5},\\L\\true).*/\1,\2\3,\4\5,\6\7,\8\9/g' | tee kakudai1.txt
+
+#y/N to kakudai.txt \2dai,\6Rotation,\4BB,\5RB,\8difference,\7max,\3machine,\1holl,\9date
+echo "today?(y/N): "
+if read -q; then
+	cat kakudai1.txt | sed -E 's/^(a[0-9]{6}),([0-9]{4}),(.*),BIG\[([0-9]+),.*REG\[([0-9]+),.*ST\[([0-9]+),.*本日\{([0-9]+),([-0-9]+),\\\\(202[0-9]{5}),.*/\2,\6,\4,\5,\8,\7,\3,\1,\9/g' | tee kakudai.txt
+else
+	cat kakudai1.txt | sed -E 's/^(a[0-9]{6}),([0-9]{4}),(.*),BIG\[[0-9]+,([0-9]+),.*REG\[[0-9]+,([0-9]+),.*ST\[[0-9]+,([0-9]+),.*1日前\{([0-9]+),([-0-9]+),\\\\(202[0-9]{5}),.*/\2,\6,\4,\5,\8,\7,\3,\1,\9/g' | tee kakudai.txt
+fi
+
+#sort unique daibanloop
+sort -uk 1n -t "," kakudai.txt | > tmp.txt
 er=($( cut -f 1 -d "," tmp.txt ))
 daiban="null"
 for ((i=1;i<1+`echo ${#er[*]}`;i++))
@@ -42,5 +51,9 @@ fi
 done
 
 python name.py
+
+#touch ../`date +%d%H%M-%S`.csv
+#newcsv=$(ls -1t ../*.csv | head -1)
+#echo -n to empty
 
 exit

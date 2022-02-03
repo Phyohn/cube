@@ -1,4 +1,5 @@
-#namecube.py
+#name.py
+#python  -i
 import cv2
 import base64
 import numpy as np
@@ -11,8 +12,20 @@ import datetime
 import time
 import platform
 
-comp = pd.read_csv('tmp.txt',names=('dai','Rotation','BB','RB','difference','max','machine'))
+tmp = pd.read_csv('tmp.txt',names=('dai','Rotation','BB','RB','difference','max','machine','holl','date'))
+#dailist series to df
+posdai = tmp.loc[:,'dai'].unique()
+tmp.insert(0,'posdai',posdai)
+dailist = pd.read_csv('dailist.txt',names=('posdai','kuu'))
+merged = pd.merge(tmp, dailist, how='outer')
+reindexed = merged.reindex(columns=['posdai','Rotation','BB','RB','difference','max','machine'])
+#fillna(0) float to int64 'machine'object0 dtype to str for replacement
+fillnaed = reindexed.fillna(0)
+comp = fillnaed.astype({'posdai': 'int64','Rotation':'int64','BB':'int64','RB':'int64','difference':'int64','max':'int64','machine':'str'})
+#df.sort_values
+comp = comp.sort_values('posdai')
 
+#DailistRenameSequence
 #pd.Series.unique()
 defdai = comp.loc[:,'machine'].unique()
 
@@ -35,14 +48,9 @@ newname = (dainame.iloc[:,1]).values.tolist()
 #replace
 comp = comp.replace(machinename,newname)
 
-now = datetime.datetime.now()
-strdate = now.strftime('%m:%d %H:%M:%S')
-comp.to_csv(f'../{strdate}.csv', header=False, index=False)
+#now = datetime.datetime.now()
+#strdate = now.strftime('%m:%d %H:%M:%S')
+#comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/{strdate}.csv', header=False, index=False)
+comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/hakui.csv', header=False, index=False)
 
-if (comp.isnull().values.sum() != 0):
-	print ("Missing value")
-	print (comp.shape)
-else:
-	print ("OK")
-	print (comp.shape)
 quit()

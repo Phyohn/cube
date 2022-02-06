@@ -48,6 +48,29 @@ newname = (dainame.iloc[:,1]).values.tolist()
 #replace
 comp = comp.replace(machinename,newname)
 
+#y/n date today?
+#y/Ndef
+def yes_no_input():
+	while True:
+		choice = input("Please respond with 'today? yes' or 'no' [y/N]: ").lower()
+		if choice in ['y', 'ye', 'yes']:
+			return True
+		elif choice in ['n', 'no']:
+			return False
+'''
+datetime to date
+'''
+if __name__ == '__main__':
+	if yes_no_input():
+		d = datetime.datetime.now()
+	else:
+		d = datetime.datetime.now() - datetime.timedelta(days=1)
+#8 digits to int
+intdt= int(d.strftime('%Y%m%d'))
+print(intdt)
+#'date'.values replace intdt all
+comp['date'] = intdt
+
 #now = datetime.datetime.now()
 #strdate = now.strftime('%m:%d %H:%M:%S')
 #comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/{strdate}.csv', header=False, index=False)

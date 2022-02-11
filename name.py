@@ -49,14 +49,20 @@ newname = (dainame.iloc[:,1]).values.tolist()
 comp = comp.replace(machinename,newname)
 
 #y/n date today?
+
+today = datetime.datetime.now()
+intdt= int(today.strftime('%Y%m%d'))
+
 #y/Ndef
 def yes_no_input():
 	while True:
-		choice = input("Please respond with 'today? yes' or 'no' [y/N]: ").lower()
+		choice = input(f"        This is'{intdt}data? yes' or 'no' [y/N]:  ( q = quit )").lower()
 		if choice in ['y', 'ye', 'yes']:
 			return True
 		elif choice in ['n', 'no']:
 			return False
+		elif choice in ['q', 'Q']:
+			return quit()
 '''
 datetime to date
 '''

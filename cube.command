@@ -26,7 +26,7 @@ kakudai1=($(cat kakudai.txt | sed -E 's/^(.*),(本日).*datas\\(.+),\\scrollbar.
 echo -E $kakudai1 | sed -E 's/ /\n/g' | sed -E 's/^(.*),(3日前).*({.+\\\\202[0-9]{5},\\L\\true).*(4日前).*({.+\\\\202[0-9]{5},\\L\\true).*(5日前).*({.+\\\\202[0-9]{5},\\L\\true).*(6日前).*({.+\\\\202[0-9]{5},\\L\\true).*/\1,\2\3,\4\5,\6\7,\8\9/g' | tee kakudai1.txt
 
 #y/N to kakudai.txt \2dai,\6Rotation,\4BB,\5RB,\8difference,\7max,\3machine,\1holl,\9date
-echo "today?(y/N): "
+echo "   When did you get it? Bfore AM7:00? (y/N): "
 if read -q; then
 	cat kakudai1.txt | sed -E 's/^(a[0-9]{6}),([0-9]{4}),(.*),BIG\[([0-9]+),.*REG\[([0-9]+),.*ST\[([0-9]+),.*本日.*\{([0-9]+),([-0-9]+),\\\\(202[0-9]{5}),.*,1日前.*/\2,\6,\4,\5,\8,\7,\3,\1,\9/g' | tee kakudai.txt
 else

@@ -28,7 +28,7 @@ def yes_no_input():
 		elif choice in ['q', 'Q']:
 			return quit()
 
-tmp = pd.read_csv('tmp.txt',names=('dai','Rotation','BB','RB','difference','max','model','holl','date'))
+tmp = pd.read_csv('forcheck.txt',names=('dai','Rotation','BB','RB','difference','max','model','holl','date'))
 #dailist series to df
 posdai = tmp.loc[:,'dai'].unique()
 tmp.insert(0,'posdai',posdai)

@@ -78,18 +78,10 @@ sort -uk 1n -t "," pre_diff.txt | > diff_topy.txt
 
 #cat trim_seg.txt | sed -E 's/^([0-9]{4}),ROT.*(\[.*\]),\\scrollbar.*2日前.*pageMax.*a([0-9]{6}).*/\1,\2,\3/g' | sed -E 's/^([0-9]{4}),.*{(.+),\\\\202[0-9]{5},\\L\\true}\],(.*).*/\1,\2,\3/g' | sed -E 's/\[\]/0,0/g' | > pre_diff.txt
 
+#Eerror checking
+#Check the number of characters per line in diff_topy.txt, add the number of characters to the end of the line, and go to #var_length.
+#make error`date "+%Y%m%d_%H%M%S"`.txt
 
-
-
-
-
-
-
-"""
-Eerror checking
-Check the number of characters per line in diff_topy.txt, add the number of characters to the end of the line, and go to var_length.
-make error`date "+%Y%m%d_%H%M%S"`.txt
-"""
 var_length=($(cat diff_topy.txt | while read line; do echo  $line,$((`echo $line | wc -m` - 1)); done))
 
 err=()

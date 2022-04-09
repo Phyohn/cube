@@ -13,10 +13,7 @@ from PIL import Image
 import platform
 import sys
 import time
-
-
-def csv_stdout(df_c):
-	return df_c.to_csv(sys.stdout)
+import readline
 
 def yes_no_input():
 	while True:
@@ -41,63 +38,40 @@ comp = fillnaed.astype({'posdai': 'int64','Rotation':'int64','BB':'int64','RB':'
 #df.sort_values
 comp = comp.sort_values('posdai')
 
-#DailistRenameSequence
-#pd.Series.unique()
-#defdai = comp.loc[:,'model'].unique()
-
-#series to df
-#defdaidf = pd.DataFrame(defdai)
-#defdaidf.insert(0,'namebank', defdai)
-#dainame = pd.read_csv('namebank.csv',names=('namebank','neoname'))
-#drop_duplicates(subset=['namebank']
-#dainame = dainame.drop_duplicates(subset=['namebank'])
-#newdailist = pd.merge(defdaidf, dainame, how='outer')
-#newdailist = newdailist.reindex(columns=['namebank','neoname'])
-#newdailist.to_csv('./namebank.csv', header=False, index=False)
 
 #auto model_name_bank
-model_name_df = pd.DataFrame(comp['model'].drop_duplicates())
-model_name_df['fuga'] = '0'
-rename_list_df = pd.read_csv('namebank.csv',names=('model','renamed_model_name'))
-merged_model_name_df = pd.merge(model_name_df, rename_list_df , how='outer').drop(columns='fuga')
-sorted_model_df = merged_model_name_df.sort_values('renamed_model_name', na_position='first')
-empty_value = (sorted_model_df['renamed_model_name'].isnull())
+today_df = pd.DataFrame(comp['model'].drop_duplicates())
+today_df['fuga'] = '0'
+stock_df = pd.read_csv('namebank.csv',names=('model','renamed_model_name'))
+today_merged = pd.merge(today_df, stock_df , how='outer').drop(columns='fuga')
+na_posi_df = today_merged.sort_values('renamed_model_name', na_position='first')
+empty_value_bool = (na_posi_df['renamed_model_name'].isnull())
+new_model_list = (na_posi_df['model'])[empty_value_bool].tolist()
 
-if empty_value.sum() > 0 :
-	csv_stdout(sorted_model_df)
-	new_model_list = (sorted_model_df['model'])[empty_value].tolist()
+#empty judgment
+if len(new_model_list)!=0:
+	print("new_machine_arrive!")
+
 	renamed_new_model_list = []
 	for new_model in new_model_list:
-		newshortname = input(f"new model arrive. {new_model}  (q = quit) Input newname. ")
+		print (new_model)
+		newshortname = input("new_machine_name_input ( q = quit ):")
 		if newshortname == "q" :
 			print("Finish!")
 			quit()
 			brake
 		else:
-			print(f'{new_model} is "{newshortname}"')
-			if yes_no_input():
-				renamed_new_model_list.append(newshortname)	
-			else:
-				pass
-	'''	
-	create a zipped list of tuples from above lists
-	'''
-	
+			print(newshortname)
+			renamed_new_model_list.append(newshortname)
 	zippedlist =  list(zip(new_model_list, renamed_new_model_list))
-	
-	'''
-	create df
-	'''
+	print(zippedlist)
 	df_by_list = pd.DataFrame(zippedlist, columns = ['model', 'renamed_model_name'])
-	added_sorted_model_df = pd.merge(sorted_model_df, df_by_list, on=('model', 'renamed_model_name'), how = 'outer').drop_duplicates(subset='model', keep='last')
-	#sorted_model_df = sorted_model_df.replace( new_model_list, renamed_new_model_list)
-	print("done!")
+	added_sorted_model_df = pd.merge(na_posi_df, df_by_list, on=('model', 'renamed_model_name'), how = 'outer').drop_duplicates(subset='model', keep='last')
 	sorted_model_df = added_sorted_model_df.sort_values('renamed_model_name', na_position='first')
-else:
-	pass
+	sorted_model_df.to_csv('./namebank.csv', header=False, index=False)
 
-print("all model name has arrived")
-sorted_model_df.to_csv('./namebank.csv', header=False, index=False)
+
+time.sleep(1)
 
 #rename
 dailist_df =  pd.read_csv('namebank.csv', header=None)

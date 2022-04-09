@@ -1,55 +1,35 @@
 #!/bin/zsh
 cd `dirname $0`
 
-#cat tenpo code var
-tenpo=($(ls -1t ../Raw/*.har | head -1 | gxargs grep -om 1 'a725489'))
+#cat hallcode code var
+hallcode=($(ls -1t ../Raw/*.har | head -1 | gxargs grep -om 1 'a725489'))
 
 #String composition
-kakudai=($(find ../Raw -maxdepth 1 -type f -name '*.har' | gxargs grep -E 'pageMax\\\"\:\d\}\"' | sed 's/ //g' | sed -E 's/\\\\/\\/g' ))
+segment=($(find ../Raw -maxdepth 1 -type f -name '*.har' | gxargs grep -E 'pageMax\\\"\:\d\}\"' | sed 's/ //g' | sed -E 's/\\\\/\\/g' ))
 
-#echo $kakudai  using$tenpo ""& ver without delimiter  to 1Sentence 1machine 2days
-echo $kakudai | sed 's/ /\n/g' | tr -d \"\:\\\ | sed 's/YMD_biz//g' | sed -E 's/\\out\\//g' | sed -E 's/\\\\202[0-9]{5}},//g' | sed 's/\\value\\//g' | sed -E 's/null/0/g' | sed -E "s/(.*)2日前.*/\1,$tenpo/g" | tee kakudai.txt
+"""
+echo $segment  Character conversion, trim, 0 replacement, $ hallcode expansion at the end (using ""), and sed to process
+dai number, ROT, BIG, REG, model name (model) ,hallcode to trim_seg.txt
+"""
+echo $segment | sed 's/ /\n/g' | tr -d \"\:\\\ | sed 's/YMD_biz//g' | sed -E 's/\\out\\//g' | sed -E 's/\\\\202[0-9]{5}},//g' | sed 's/\\value\\//g' | sed -E 's/null/0/g' | sed "/pageMax/s/$/$hallcode/g" | sed -E 's/.*cd_dai\\\\([0-9]{4})\\,.*name\\\\(.+)\\,\\cd_ps.*BIG\\,\\item\\(\[.*\])},{\\title\\\\REG\\,\\item\\(\[.*\])},0,{.*累計ゲーム\\,\\item\\(\[.*\])},{\\title\\\\最終(.*)/\1,ROT\5,BIG\3,REG\4,\2,\6/g' | tee trim_seg.txt
 
+"""
+From trim_seg.txt, dai number, ROT, BIG, REG, difference number (1111 is yesterday on  0000 is today), MAX(except a of hallcode), model name (model), hallcode (for python), Temporary datet to pre_out.txt
 
-#trimming null to 0 'dai','model','BB','RB','Rotation','max','difference','date','holl'
-cat kakudai.txt | sed -E 's/.*cd_dai\\\\([0-9]{4})\\,.*name\\\\(.+)\\,\\cd_ps.*BIG\\,\\item\\(\[.*\])},{\\title\\\\REG\\,\\item\\(\[.*\])},0,{.*累計ゲーム\\,\\item\\(\[.*\])},{\\title.*(本日.*,\\\\202[0-9]{5},\\L\\true).*(1日前.*,\\\\202[0-9]{5},\\L\\true).*(a[0-9]{6}).*/\1,\2,BIG\3,REG\4,ST\5,\6,\7,\8/g' | tee kakudai1.txt
-
-＃Select date and to 'dai','Rotation','BB','RB','difference','max','model','holl','date'
-echo "   When did you get it? Bfore AM7:00? (y/N): "
+The purpose is to be able to check the serial number and model name while preventing errors in processing the difference number of sheets.
+"""
+echo "today?(y/N): "
 if read -q; then
-	cat kakudai1.txt | sed -E 's/^([0-9]{4}),(.*),BIG\[([0-9]+),.*REG\[([0-9]+),.*ST\[([0-9]+),.*本日.*{([0-9]+),([-0-9]+),\\\\(202[0-9]{5}),\\L\\true,1日前.*(a[0-9]{6}).*/\1,\5,\3,\4,\7,\6,\2,\9,\8/g' | tee forsort.txt
+	cat trim_seg.txt | sed -E 's/^([0-9]{4}),ROT\[([0-9]+,).*BIG\[([0-9]+,).*REG\[([0-9]+,).*\],(.*),ゲーム.*pageMax.*a([0-9]{6}).*/\1,\2\3\40000,\6,\5,\6,20227777/g' | tee pre_out.txt
+
 else
-	cat kakudai1.txt | sed -E 's/^([0-9]{4}),(.*),BIG\[[0-9]+,([0-9]+),.*REG\[[0-9]+,([0-9]+),.*ST\[[0-9]+,([0-9]+),.*1日前.*{([0-9]+),([-0-9]+),\\\\(202[0-9]{5}),\\L\\true,.*(a[0-9]{6}).*/\1,\5,\3,\4,\7,\6,\2,\9,\8/g' | tee forsort.txt
+	cat trim_seg.txt | sed -E 's/^([0-9]{4}),ROT\[[0-9]+,([0-9]+,).*BIG\[[0-9]+,([0-9]+,).*REG\[[0-9]+,([0-9]+,).*\],(.*),ゲーム.*pageMax.*a([0-9]{6}).*/\1,\2\3\41111,\6,\5,\6,20227777/g' | tee pre_out.txt
+
 fi
 
-#前半整える
-#cat kakudai.txt | sed -E 's/^Raw,(a[0-9]{6}),.*cd_dai\\\\([0-9]{4})\\,.*name\\\\(.+)\\,\\cd_ps.*BIG\\,\\item\\(\[.*\])},{\\title\\\\REG\\,\\item\\(\[.*\])},0,{.*累計ゲーム\\,\\item\\(\[.*\])},{\\title.*(本日.*,\\\\202[0-9]{5},\\L\\true).*/\1,\2,\3,\4,\5,\6,\7/g'
-
-
-#1line trimming null to 0 BIG REG ST kaketai.txt
-#echo $kakudai | sed 's/ /\n/g' | tr -d \"\:\\\ | sed 's/YMD_biz//g' | sed -E 's/\\out\\//g' | sed -E 's/\\\\202[0-9]{5}},//g' | sed 's/\\value\\//g' | sed -E 's/null/0/g' | sed -E 's/^Raw,(a[0-9]{6}),.*cd_dai\\\\([0-9]{4})\\,.*name\\\\(.+)\\,\\cd_ps.*BIG\\,\\item\\(\[.*\])},{\\title\\\\REG\\,\\item\\(\[.*\])},0,{.*累計ゲーム\\,\\item\\(\[.*\])},{\\title.*(本日.*,\\\\202[0-9]{5},\\L\\true).*/\1,\2,\3,BIG\4,REG\5,ST\6,\7/g' | tee kakudai.txt
-
-#Sed to $kakedai1 \2\3 本日,\4\5 1日前,\6\7 2日前,
-#kakudai1=($(cat kakudai.txt | sed -E 's/^(.*),(本日).*({.+\\\\202[0-9]{5},\\L\\true).*(1日前).*({.+\\\\202[0-9]{5},\\L\\true).*(2日前).*({.+\\\\202[0-9]{5},\\L\\true).*(3日前)\\(.*)/\1,\2\3,\4\5,\6\7,\8\9/g'))
-#2/3当日空だとエラーになる
-#kakudai1=($(cat kakudai.txt | sed -E 's/^(.*),(本日).*datas\\(.+),\\scrollbar.*(1日前).*({.+\\\\202[0-9]{5},\\L\\true).*(2日前).*({.+\\\\202[0-9]{5},\\L\\true).*(3日前)\\(.*)/\1,\2\3,\4\5,\6\7,\8\9/g'))
-
-
-
-#-E no escape \2\3 3日前,\4\5 4日前,\6\7 5日前,\8\9 6日前 to kakudai1.txt
-#echo -E $kakudai1 | sed -E 's/ /\n/g' | sed -E 's/^(.*),(3日前).*({.+\\\\202[0-9]{5},\\L\\true).*(4日前).*({.+\\\\202[0-9]{5},\\L\\true).*(5日前).*({.+\\\\202[0-9]{5},\\L\\true).*(6日前).*({.+\\\\202[0-9]{5},\\L\\true).*/\1,\2\3,\4\5,\6\7,\8\9/g' | tee kakudai1.txt
-
-#y/N to kakudai.txt \2dai,\6Rotation,\4BB,\5RB,\8difference,\7max,\3machine,\1holl,\9date
-#echo "   When did you get it? Bfore AM7:00? (y/N): "
-#if read -q; then
-	cat kakudai1.txt | sed -E 's/^(a[0-9]{6}),([0-9]{4}),(.*),BIG\[([0-9]+),.*REG\[([0-9]+),.*ST\[([0-9]+),.*本日.*\{([0-9]+),([-0-9]+),\\\\(202[0-9]{5}),.*,1日前.*/\2,\6,\4,\5,\8,\7,\3,\1,\9/g' | tee kakudai.txt
-#else
-	cat kakudai1.txt | sed -E 's/^(a[0-9]{6}),([0-9]{4}),(.*),BIG\[[0-9]+,([0-9]+),.*REG\[[0-9]+,([0-9]+),.*ST\[[0-9]+,([0-9]+),.*1日前\{([0-9]+),([-0-9]+),\\\\(202[0-9]{5}),.*/\2,\6,\4,\5,\8,\7,\3,\1,\9/g' | tee kakudai.txt
-#fi
-
 #sort unique daibanloop
-sort -uk 1n -t "," forsort.txt | > forcheck.txt
-er=($( cut -f 1 -d "," forcheck.txt ))
+sort -uk 1n -t "," pre_out.txt | > pre_out_topy.txt
+er=($( cut -f 1 -d "," pre_out_topy.txt ))
 daiban="null"
 for ((i=1;i<1+`echo ${#er[*]}`;i++))
 do
@@ -68,10 +48,82 @@ echo "ok$er[i]"
 fi
 done
 
+
+#date discrimination from pre_out.txt. from trim_seg.txt to pre_diff.txt
+#posdai,max,difference,hall
+#If there is a number "{0,0,\\20220407,\L\true}],\scrollbar\"
+#regex .*{(.+),\\\\202[0-9]{5},\\L\\true}\],\\scrollbar.*1日前
+#If not "datas\[],\scrollbar"
+#regex .*(\[\]),\\scrollbar.*6日前
+#In case of [], replace with 0,0
+
+
+selector=($(grep -om 1 -e '0000' -e '1111' pre_out.txt))
+echo $selector
+
+if [[ $selector -eq 0000 ]]; then
+	echo 'today'
+	cat trim_seg.txt | sed -E 's/^([0-9]{4}),ROT.*(\[.*\]),\\scrollbar.*1日前.*pageMax.*a([0-9]{6}).*/\1,\2,\3/g' | sed -E 's/^([0-9]{4}),.*{(.+),\\\\202[0-9]{5},\\L\\true}\],(.*).*/\1,\2,\3/g' | sed -E 's/\[\]/0,0/g' | > pre_diff.txt
+elif [[ $selector -eq 1111 ]]; then
+	echo 'yesterday'
+	cat trim_seg.txt | sed -E 's/^([0-9]{4}),ROT.*(\[.*\]),\\scrollbar.*2日前.*pageMax.*a([0-9]{6}).*/\1,\2,\3/g' | sed -E 's/^([0-9]{4}),.*{(.+),\\\\202[0-9]{5},\\L\\true}\],(.*).*/\1,\2,\3/g' | sed -E 's/\[\]/0,0/g' | > pre_diff.txt
+else
+	echo 'error!!!!'
+fi
+
+sort -uk 1n -t "," pre_diff.txt | > diff_topy.txt
+
+
+#cat trim_seg.txt | sed -E 's/^([0-9]{4}),ROT.*(\[.*\]),\\scrollbar.*1日前.*pageMax.*a([0-9]{6}).*/\1,\2,\3/g' | sed -E 's/^([0-9]{4}),.*{(.+),\\\\202[0-9]{5},\\L\\true}\],(.*).*/\1,\2,\3/g' | sed -E 's/\[\]/0,0/g' | > pre_diff.txt
+
+#cat trim_seg.txt | sed -E 's/^([0-9]{4}),ROT.*(\[.*\]),\\scrollbar.*2日前.*pageMax.*a([0-9]{6}).*/\1,\2,\3/g' | sed -E 's/^([0-9]{4}),.*{(.+),\\\\202[0-9]{5},\\L\\true}\],(.*).*/\1,\2,\3/g' | sed -E 's/\[\]/0,0/g' | > pre_diff.txt
+
+
+
+
+
+
+
+
+"""
+Eerror checking
+Check the number of characters per line in diff_topy.txt, add the number of characters to the end of the line, and go to var_length.
+make error`date "+%Y%m%d_%H%M%S"`.txt
+"""
+var_length=($(cat diff_topy.txt | while read line; do echo  $line,$((`echo $line | wc -m` - 1)); done))
+
+err=()
+for var in ${var_length}; do
+	if [[ ${#var} -gt 30 ]]; then
+		echo ${var}
+		err+=(${var})
+	fi
+done
+
+if [[ $#err -ne " " ]]; then
+	echo $err | sed 's/ /\n/g' | grep -E '^[0-9]{4}' | > error`date "+%Y%m%d_%H%M%S"`.txt
+	echo 'エラーファイルを出力しました(途中終了)'
+	exit
+fi
+
 python name.py
 
 #touch ../`date +%d%H%M-%S`.csv
 #newcsv=$(ls -1t ../*.csv | head -1)
 #echo -n to empty
 
+#Empty the contents of the file
+echo -n > diff_topy.txt
+echo -n > pre_diff.txt
+echo -n > pre_out.txt
+echo -n > pre_out_topy.txt
+echo -n > trim_seg.txt
+
+echo "正常終了"
+
 exit
+
+
+
+
+

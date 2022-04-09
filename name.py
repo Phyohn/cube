@@ -28,13 +28,13 @@ def yes_no_input():
 		elif choice in ['q', 'Q']:
 			return quit()
 
-tmp = pd.read_csv('forcheck.txt',names=('dai','Rotation','BB','RB','difference','max','model','holl','date'))
+tmp = pd.read_csv('pre_out_topy.txt',names=('dai','Rotation','BB','RB','difference','max','model','hall','date'))
 #dailist series to df
 posdai = tmp.loc[:,'dai'].unique()
 tmp.insert(0,'posdai',posdai)
 dailist = pd.read_csv('dailist.txt',names=('posdai','kuu'))
 merged = pd.merge(tmp, dailist, how='outer')
-reindexed = merged.reindex(columns=['posdai','Rotation','BB','RB','difference','max','model'])
+reindexed = merged.reindex(columns=['posdai','Rotation','BB','RB','difference','max','model','hall'])
 #fillna(0) float to int64 'model'object0 dtype to str for replacement
 fillnaed = reindexed.fillna(0)
 comp = fillnaed.astype({'posdai': 'int64','Rotation':'int64','BB':'int64','RB':'int64','difference':'int64','max':'int64','model':'str'})
@@ -120,10 +120,27 @@ intdt= int(d.strftime('%Y%m%d'))
 print(intdt)
 #'date'.values replace intdt all
 comp['date'] = intdt
+#'hall'columns delete
+test_comp = comp.drop(columns='hall')
+
 
 #now = datetime.datetime.now()
 #strdate = now.strftime('%m:%d %H:%M:%S')
-#comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/{strdate}.csv', header=False, index=False)
-comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/hakui.csv', header=False, index=False)
+#test_comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/{strdate}.csv', header=False, index=False)
+#Test pattern output for error countermeasures
+test_comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/hakui.csv', header=False, index=False)
+
+#4.8marge diff_topy.txt 
+diff = pd.read_csv('diff_topy.txt',names=('posdai','max','difference','hall'))
+#.update is It ’s very simple, but the consistency remains questionable.
+#comp.update(diff)
+#Marge'max'and'difference' with hall and posdai as keys
+#'max','difference'columns delete
+drop_comp = comp.drop(columns=['max','difference'])
+merged_comp = pd.merge(drop_comp, diff, on=['posdai','hall'])
+reindexed_merged_comp= merged_comp.reindex(columns=['posdai','Rotation','BB','RB','difference','max','model','date'])
+
+#Overwrite hakui.csv with final output
+reindexed_merged_comp.to_csv(f'/Users/mac2018/Applications/Collection/linkdata/hakui.csv', header=False, index=False)
 
 quit()
